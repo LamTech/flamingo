@@ -2,4 +2,4 @@
 .env
 go.sum
 .idea/
-*/DS_Store
+*/.DS_Store
