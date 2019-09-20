@@ -1,10 +1,9 @@
 package router
 
 import (
-	fctrl "flamingo/app/http/controller"
-	cjwt "flamingo/app/http/controller/auth"
+	"flamingo/app/http/api"
 	"flamingo/app/http/middleware"
-	mjwt "flamingo/app/http/middleware/jwt"
+	"flamingo/app/http/middleware/jwt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,14 +14,14 @@ func NewRouter() *gin.Engine {
 	// 中间件, 顺序不能改
 	r.Use(middleware.Cors())
 
-	r.POST("/login",cjwt.Login)
-	r.POST("/register",cjwt.Register)
+	r.POST("/login", api.Login)
+	r.POST("/register", api.RegisterUser)
 
 	// 路由
 	v1 := r.Group("/api/v1")
-	v1.Use(mjwt.JWTAuth())
+	v1.Use(jwt.JWTAuth())
 	{
-		v1.GET("ping", fctrl.Ping)
+		v1.GET("/dataByTime", api.GetDataByTime)
 	}
 	return r
 }

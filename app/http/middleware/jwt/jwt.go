@@ -2,14 +2,15 @@ package jwt
 
 import (
 	"errors"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 )
 
-// 中间件，检查token
+// JWTAuth 中间件，检查token
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
@@ -18,14 +19,14 @@ func JWTAuth() gin.HandlerFunc {
 				"status": -1,
 				"msg":    "请求未携带token，无权限访问",
 			})
-			c.Set("isPass", false)
+			c.Abort()
 			return
 		}
 
 		log.Print("get token: ", token)
 
 		j := NewJWT()
-		// parseToken
+		// parseToken 解析token包含的信息
 		claims, err := j.ParseToken(token)
 		if err != nil {
 			if err == TokenExpired {
@@ -33,26 +34,27 @@ func JWTAuth() gin.HandlerFunc {
 					"status": -1,
 					"msg":    "授权已过期",
 				})
-				c.Set("isPass", false)
+				c.Abort()
 				return
 			}
 			c.JSON(http.StatusOK, gin.H{
 				"status": -1,
 				"msg":    err.Error(),
 			})
-			c.Set("isPass", false)
+			c.Abort()
 			return
 		}
-		c.Set("isPass", true)
+		// 继续交由下一个路由处理,并将解析出的信息传递下去
 		c.Set("claims", claims)
 	}
 }
 
-// 签名
+// JWT 签名结构
 type JWT struct {
 	SigningKey []byte
 }
 
+// 一些常量
 var (
 	TokenExpired     error  = errors.New("Token is expired")
 	TokenNotValidYet error  = errors.New("Token not active yet")
@@ -61,32 +63,39 @@ var (
 	SignKey          string = "newtrekWang"
 )
 
-// 载荷
+// 载荷，可以加一些自己需要的信息
 type CustomClaims struct {
-	ID    uint `json:"userId"`
-	UserName  string `json:"userName"`
-	Mobile string `json:"mobile"`
+	ID    string `json:"userId"`
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
 	jwt.StandardClaims
 }
 
+// 新建一个jwt实例
 func NewJWT() *JWT {
 	return &JWT{
 		[]byte(GetSignKey()),
 	}
 }
+
+// 获取signKey
 func GetSignKey() string {
 	return SignKey
 }
+
+// 这是SignKey
 func SetSignKey(key string) string {
 	SignKey = key
 	return SignKey
 }
 
+// CreateToken 生成一个token
 func (j *JWT) CreateToken(claims CustomClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(j.SigningKey)
 }
 
+// 解析Tokne
 func (j *JWT) ParseToken(tokenString string) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return j.SigningKey, nil
@@ -111,6 +120,7 @@ func (j *JWT) ParseToken(tokenString string) (*CustomClaims, error) {
 	return nil, TokenInvalid
 }
 
+// 更新token
 func (j *JWT) RefreshToken(tokenString string) (string, error) {
 	jwt.TimeFunc = func() time.Time {
 		return time.Unix(0, 0)

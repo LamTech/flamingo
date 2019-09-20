@@ -3,6 +3,7 @@ package database
 import (
 	"flamingo/database/migrations"
 	"flamingo/util"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"os"
@@ -27,7 +28,8 @@ func Database() {
 		util.Log().Panic("数据库名称缺失！ \n")
 	}
 
-	databaseConfig := os.Getenv("DB_USERNAME") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_DATABASE") + "?charset=utf8&parseTime=True&loc=Local"
+	databaseConfig := os.Getenv("DB_USERNAME") + ":" + os.Getenv("DB_PASSWORD") + "@(" + os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT") + ")/" + os.Getenv("DB_DATABASE") + "?charset=utf8&parseTime=True&loc=Local"
+	fmt.Println(databaseConfig)
 	db, err := gorm.Open("mysql", databaseConfig)
 	db.LogMode(true)
 	// Error

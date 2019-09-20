@@ -5,7 +5,7 @@ import (
 	"flamingo/router"
 )
 
-func main(){
+func main() {
 	config.Load()
 
 	// 装载路由

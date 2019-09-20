@@ -1,15 +1,16 @@
 package migrations
 
 import (
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
 
 // User 用户模型
 type User struct {
 	gorm.Model
-	UserName       string
-	PasswordDigest string
-	Nickname       string
-	Status         string
-	Avatar         string `gorm:"size:1000"`
+	UniqueId uuid.UUID
+	Name     string `json:"name"`
+	Gender   uint `json:"gender"`
+	Mobile   string `json:"mobile"`
+	Password string `json:"password"`
 }
