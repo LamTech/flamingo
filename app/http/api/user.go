@@ -39,7 +39,7 @@ func RegisterUser(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"status": -1,
-			"msg":    "注册失败" + err.Error(),
+			"msg":    "注册失败：" + err.Error(),
 		})
 	}
 
