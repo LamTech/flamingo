@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"time"
@@ -65,9 +66,9 @@ var (
 
 // 载荷，可以加一些自己需要的信息
 type CustomClaims struct {
-	ID    string `json:"userId"`
+	UniqueId    uuid.UUID `json:"uniqueId"`
 	Name  string `json:"name"`
-	Phone string `json:"phone"`
+	Mobile string `json:"mobile"`
 	jwt.StandardClaims
 }
 

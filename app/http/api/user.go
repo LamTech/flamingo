@@ -3,10 +3,11 @@ package api
 import (
 	mjwt "flamingo/app/http/middleware/jwt"
 	"flamingo/database/model"
+	"flamingo/util/response"
 	"log"
 	"net/http"
+	"os"
 	"time"
-
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
@@ -21,94 +22,74 @@ type RegistInfo struct {
 // Register 注册用户
 func RegisterUser(c *gin.Context) {
 	var registerInfo RegistInfo
-	if bindErr := c.BindJSON(&registerInfo); bindErr != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status": -1,
-			"msg":    bindErr.Error(),
-		})
-
+	if bindErr := c.ShouldBindJSON(&registerInfo); bindErr != nil {
+		response.JsonError(c,response.RequireParam,bindErr.Error())
 		return
 	}
 
 	err := model.Register(registerInfo.Mobile, registerInfo.PassWord)
 	if err == nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status": 0,
-			"msg":    "注册成功！",
-		})
+		response.JsonSuccess(c,nil)
 	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"status": -1,
-			"msg":    "注册失败：" + err.Error(),
-		})
+		response.JsonError(c,response.MobileExist,err.Error())
 	}
 
 }
 
 // LoginResult 登录结果结构
 type LoginResult struct {
-	Token string `json:"token"`
+	AccessToken string `json:"access_token"`
 	model.User
 }
 
 // Login 登录
 func Login(c *gin.Context) {
-	var loginReq model.LoginRequest
-	if c.BindJSON(&loginReq) == nil {
-		isPass, user, err := model.LoginCheck(loginReq)
-		if isPass {
-			generateToken(c, user)
-		} else {
-			c.JSON(http.StatusOK, gin.H{
-				"status": -1,
-				"msg":    "验证失败," + err.Error(),
-			})
-		}
+	var loginRequest model.LoginRequest
+	if bindErr := c.ShouldBindJSON(&loginRequest); bindErr != nil {
+		response.JsonError(c,response.ParseJsonError,bindErr.Error())
+		return
+	}
+
+	isPass, user, err := model.LoginCheck(loginRequest)
+	if isPass {
+		generateToken(c, user)
 	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"status": -1,
-			"msg":    "json 解析失败",
-		})
+		response.JsonError(c,response.ParseJsonError,err.Error())
+		return
 	}
 }
 
 // 生成令牌
 func generateToken(c *gin.Context, user model.User) {
 	j := &mjwt.JWT{
-		[]byte("newtrekWang"),
+		[]byte(os.Getenv("Flamingo")),
 	}
 	claims := mjwt.CustomClaims{
-		user.Name,
+		user.UniqueId,
 		user.Name,
 		user.Mobile,
 		jwtgo.StandardClaims{
-			NotBefore: int64(time.Now().Unix() - 1000), // 签名生效时间
-			ExpiresAt: int64(time.Now().Unix() + 3600), // 过期时间 一小时
-			Issuer:    "newtrekWang",                   //签名的发行者
+			NotBefore: int64(time.Now().Unix() - 1000), 			// 签名生效时间
+			ExpiresAt: int64(time.Now().Unix() + 3600), 			// 过期时间一小时
+			Issuer:    os.Getenv("Flamingo"),					//签名的发行者
 		},
 	}
 
-	token, err := j.CreateToken(claims)
+	accessToken, err := j.CreateToken(claims)
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status": -1,
-			"msg":    err.Error(),
-		})
+		response.JsonError(c,response.CreateTokenError,err.Error())
 		return
 	}
 
-	log.Println(token)
+	log.Println(accessToken)
 
 	data := LoginResult{
 		User:  user,
-		Token: token,
+		AccessToken: accessToken,
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status": 0,
-		"msg":    "登录成功！",
-		"data":   data,
-	})
+
+	response.JsonSuccess(c,data)
 	return
 }
 
