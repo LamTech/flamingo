@@ -86,6 +86,8 @@ func LoginCheck(loginRequest LoginRequest) (bool, User, error) {
 		//	查到了一条记录
 		if user.CheckPassword(loginRequest.Password) {
 			resultBool = true
+		}else{
+			return resultBool, user, fmt.Errorf("用户名或密码错误！")
 		}
 
 		return resultBool, user, nil
