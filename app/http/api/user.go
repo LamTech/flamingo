@@ -4,12 +4,13 @@ import (
 	mjwt "flamingo/app/http/middleware/jwt"
 	"flamingo/database/model"
 	"flamingo/util/response"
+	jwtgo "github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"os"
 	"time"
-	jwtgo "github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
 )
 
 // 注册信息
@@ -38,15 +39,22 @@ func RegisterUser(c *gin.Context) {
 
 // LoginResult 登录结果结构
 type LoginResult struct {
+	LoginUser
 	AccessToken string `json:"access_token"`
-	model.User
+}
+
+type LoginUser struct {
+	UniqueId uuid.UUID
+	Name     string `json:"name"`
+	Gender   uint   `json:"gender"`
+	Mobile   string `json:"mobile"`
 }
 
 // Login 登录
 func Login(c *gin.Context) {
 	var loginRequest model.LoginRequest
-	if bindErr := c.ShouldBindJSON(&loginRequest); bindErr != nil {
-		response.JsonError(c,response.ParseJsonError,bindErr.Error())
+	if parseErr := c.ShouldBindJSON(&loginRequest); parseErr != nil {
+		response.JsonError(c,response.ParseJsonError,parseErr.Error())
 		return
 	}
 
@@ -85,12 +93,21 @@ func generateToken(c *gin.Context, user model.User) {
 	log.Println(accessToken)
 
 	data := LoginResult{
-		User:  user,
+		LoginUser:  BuildUser(user),
 		AccessToken: accessToken,
 	}
 
 	response.JsonSuccess(c,data)
 	return
+}
+
+func BuildUser(user model.User) LoginUser {
+	return LoginUser{
+		UniqueId : user.UniqueId,
+		Name : user.Name,
+		Gender : user.Gender,
+		Mobile : user.Mobile,
+	}
 }
 
 // GetDataByTime 一个需要token认证的测试接口

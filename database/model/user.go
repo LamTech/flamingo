@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	dbName     = "myBlog.db"
-	userBucket = "user"
+	// PassWordCost 密码加密难度
+	PassWordCost = 12
 )
 
 // User 用户类
@@ -25,7 +26,23 @@ type User struct {
 // LoginReq 登录请求参数类
 type LoginRequest struct {
 	Mobile   string `json:"mobile"`
-	PassWord string `json:"password"`
+	Password string `json:"password"`
+}
+
+// SetPassword 设置密码
+func (user *User) SetPassword(password string) error {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), PassWordCost)
+	if err != nil {
+		return err
+	}
+	user.Password = string(bytes)
+	return nil
+}
+
+// CheckPassword 校验密码
+func (user *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	return err == nil
 }
 
 // Register 插入用户，先检查是否存在用户，如果没有则存入
@@ -41,6 +58,8 @@ func Register(mobile string, password string) error {
 		Mobile:   mobile,
 		Password: password,
 	}
+
+	newUser.SetPassword(password)
 
 	return database.DB.Create(&newUser).Error
 }
@@ -59,13 +78,16 @@ func CheckUser(mobile string) bool {
 // LoginCheck 登录验证
 func LoginCheck(loginRequest LoginRequest) (bool, User, error) {
 	resultBool := false
-
 	user := User{}
-
+	//	这里进行密码校验
 	if err := database.DB.Where("mobile = ?", loginRequest.Mobile).First(&user).Error; err != nil {
 		return resultBool, user, err
 	} else {
-		resultBool = true
+		//	查到了一条记录
+		if user.CheckPassword(loginRequest.Password) {
+			resultBool = true
+		}
+
 		return resultBool, user, nil
 	}
 
