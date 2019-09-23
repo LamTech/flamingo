@@ -4,3 +4,4 @@ go.sum
 .idea/
 */.DS_Store
 ./myBlog.db
+./main
