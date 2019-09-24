@@ -111,12 +111,24 @@ func BuildUser(user model.User) LoginUser {
 
 
 func GetUserInfo(c *gin.Context){
+	defer func() {
+		if r := recover(); r != nil {
+			response.JsonError(c,response.DbQueryError,r)
+		}
+	}()
+
 	claims,ok := c.MustGet("claims").(*mjwt.CustomClaims)
 	if ok&&claims != nil {
 		user := model.User{}
 		//	这里进行密码校验
-		if err := database.DB.Where("unique_id = ?", claims.UniqueId).First(&user).Error; err != nil {
-			panic(err)
+		if returnDB := database.DB.Where("mobile = ?", "13815441659").First(&user); returnDB.Error != nil {
+			errMsg := "未知错误！";
+			if returnDB.RecordNotFound() == true {
+				errMsg = "查询不到相关记录！"
+			}else{
+				errMsg = returnDB.Error.Error()
+			}
+			panic(errMsg)
 		}
 		response.JsonSuccess(c,BuildUser(user))
 	}
