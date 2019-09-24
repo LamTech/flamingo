@@ -14,18 +14,18 @@ import (
 // JWTAuth 中间件，检查token
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-		if token == "" {
+		access_token := c.Request.Header.Get("access_token")
+		if access_token == "" {
 			response.JsonError(c,response.TokenRequired,"请求未携带token，无权限访问")
 			c.Abort()
 			return
 		}
 
-		log.Print("get token: ", token)
+		log.Print("get token: ", access_token)
 
 		j := NewJWT()
 		// parseToken 解析token包含的信息
-		claims, err := j.ParseToken(token)
+		claims, err := j.ParseToken(access_token)
 		if err != nil {
 			if err == TokenExpired {
 				response.JsonError(c,response.TokenExpired,"授权已过期")
@@ -52,7 +52,7 @@ var (
 	TokenNotValidYet error  = errors.New("Token not active yet")
 	TokenMalformed   error  = errors.New("That's not even a token")
 	TokenInvalid     error  = errors.New("Couldn't handle this token:")
-	SignKey          string = "newtrekWang"
+	SignKey          string = "flamingo"
 )
 
 // 载荷，可以加一些自己需要的信息

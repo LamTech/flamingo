@@ -2,14 +2,13 @@ package api
 
 import (
 	mjwt "flamingo/app/http/middleware/jwt"
+	"flamingo/database"
 	"flamingo/database/model"
 	"flamingo/util/response"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"log"
-	"net/http"
-	"os"
 	"time"
 )
 
@@ -70,7 +69,7 @@ func Login(c *gin.Context) {
 // 生成令牌
 func generateToken(c *gin.Context, user model.User) {
 	j := &mjwt.JWT{
-		[]byte(os.Getenv("Flamingo")),
+		[]byte("flamingo"),
 	}
 	claims := mjwt.CustomClaims{
 		user.UniqueId,
@@ -79,7 +78,7 @@ func generateToken(c *gin.Context, user model.User) {
 		jwtgo.StandardClaims{
 			NotBefore: int64(time.Now().Unix() - 1000), 			// 签名生效时间
 			ExpiresAt: int64(time.Now().Unix() + 3600), 			// 过期时间一小时
-			Issuer:    os.Getenv("Flamingo"),					//签名的发行者
+			Issuer:    "flamingo",					//签名的发行者
 		},
 	}
 
@@ -110,14 +109,15 @@ func BuildUser(user model.User) LoginUser {
 	}
 }
 
-// GetDataByTime 一个需要token认证的测试接口
-func GetDataByTime(c *gin.Context) {
-	claims := c.MustGet("claims").(*mjwt.CustomClaims)
-	if claims != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status": 0,
-			"msg":    "token有效",
-			"data":   claims,
-		})
+
+func GetUserInfo(c *gin.Context){
+	claims,ok := c.MustGet("claims").(*mjwt.CustomClaims)
+	if ok&&claims != nil {
+		user := model.User{}
+		//	这里进行密码校验
+		if err := database.DB.Where("unique_id = ?", claims.UniqueId).First(&user).Error; err != nil {
+			panic(err)
+		}
+		response.JsonSuccess(c,BuildUser(user))
 	}
 }

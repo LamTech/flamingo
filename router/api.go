@@ -21,7 +21,7 @@ func NewRouter() *gin.Engine {
 	v1 := r.Group("/api/v1")
 	v1.Use(jwt.JWTAuth())
 	{
-		v1.GET("/dataByTime", api.GetDataByTime)
+		v1.GET("/userinfo", api.GetUserInfo)
 	}
 	return r
 }

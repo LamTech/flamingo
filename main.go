@@ -10,5 +10,5 @@ func main() {
 
 	// 装载路由
 	r := router.NewRouter()
-	r.Run(":3000")
+	r.Run(":6000")
 }
