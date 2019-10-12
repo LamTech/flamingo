@@ -47,6 +47,7 @@ type LoginUser struct {
 	Name     string `json:"name"`
 	Gender   uint   `json:"gender"`
 	Mobile   string `json:"mobile"`
+	CurrentAuthority   string `json:"authority"`
 }
 
 // Login 登录
@@ -106,6 +107,7 @@ func BuildUser(user model.User) LoginUser {
 		Name : user.Name,
 		Gender : user.Gender,
 		Mobile : user.Mobile,
+		CurrentAuthority : "user",
 	}
 }
 
@@ -121,7 +123,7 @@ func GetUserInfo(c *gin.Context){
 	if ok&&claims != nil {
 		user := model.User{}
 		//	这里进行密码校验
-		if returnDB := database.DB.Where("mobile = ?", "13815441659").First(&user); returnDB.Error != nil {
+		if returnDB := database.DB.Where("mobile = ?", claims.Mobile).First(&user); returnDB.Error != nil {
 			errMsg := "未知错误！";
 			if returnDB.RecordNotFound() == true {
 				errMsg = "查询不到相关记录！"
