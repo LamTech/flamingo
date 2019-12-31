@@ -14,18 +14,18 @@ import (
 // JWTAuth 中间件，检查token
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		access_token := c.Request.Header.Get("access_token")
-		if access_token == "" {
+		accessToken := c.Request.Header.Get("access_token")
+		if accessToken == "" {
 			response.JsonError(c,response.TokenRequired,"请求未携带token，无权限访问")
 			c.Abort()
 			return
 		}
 
-		log.Print("get token: ", access_token)
+		log.Print("get token: ", accessToken)
 
 		j := NewJWT()
 		// parseToken 解析token包含的信息
-		claims, err := j.ParseToken(access_token)
+		claims, err := j.ParseToken(accessToken)
 		if err != nil {
 			if err == TokenExpired {
 				response.JsonError(c,response.TokenExpired,"授权已过期")

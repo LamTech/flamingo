@@ -26,6 +26,7 @@ type User struct {
 // LoginReq 登录请求参数类
 type LoginRequest struct {
 	Mobile   string `json:"mobile"`
+	UserName   string `json:"UserName"`
 	Password string `json:"password"`
 }
 
@@ -80,7 +81,11 @@ func LoginCheck(loginRequest LoginRequest) (bool, User, error) {
 	resultBool := false
 	user := User{}
 	//	这里进行密码校验
-	if err := database.DB.Where("mobile = ?", loginRequest.Mobile).First(&user).Error; err != nil {
+	//test := User{}
+	//database.DB.Where("mobile = ? OR name = ?", loginRequest.UserName,loginRequest.UserName).First(&test)
+	//fmt.Println(test)
+	//fmt.Println(loginRequest)
+	if err := database.DB.Where("mobile = ? OR name = ?", loginRequest.UserName,loginRequest.UserName).First(&user).Error; err != nil {
 		return resultBool, user, err
 	} else {
 		//	查到了一条记录

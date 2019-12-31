@@ -5,6 +5,7 @@ import (
 	"flamingo/database"
 	"flamingo/database/model"
 	"flamingo/util/response"
+	"fmt"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -57,7 +58,7 @@ func Login(c *gin.Context) {
 		response.JsonError(c,response.ParseJsonError,parseErr.Error())
 		return
 	}
-
+	fmt.Println(loginRequest)
 	isPass, user, err := model.LoginCheck(loginRequest)
 	if isPass {
 		generateToken(c, user)

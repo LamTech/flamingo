@@ -14,7 +14,7 @@ func NewRouter() *gin.Engine {
 	// 中间件, 顺序不能改
 	r.Use(middleware.Cors())
 
-	r.POST("/api/login", api.Login)
+	r.POST("/api/login/account", api.Login)
 	r.POST("/api/register", api.RegisterUser)
 
 	// 路由
